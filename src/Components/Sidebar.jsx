@@ -19,7 +19,6 @@ const Sidebar = () => {
             anchor="left"
             variant="permanent"
             style={{
-                backgroundColor:'AppWorkspace'
             }}
         >
             <List>

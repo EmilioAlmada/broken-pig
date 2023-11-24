@@ -6,6 +6,22 @@ import useFetch from "../hooks/useFetch";
 import { DataGrid } from "@mui/x-data-grid";
 import { Add, ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
 import { PaginationComponent } from "./Transactions";
+// import { Chart as ChartJs } from "react-chartjs-2";
+import { Line } from "react-chartjs-2";
+import {
+    Chart as ChartJS,
+    LineElement,
+    CategoryScale,
+    LinearScale,
+    PointElement
+} from "chart.js";
+
+ChartJS.register(
+    LineElement,
+    CategoryScale,
+    LinearScale,
+    PointElement
+)
 
 const Dashboard = () => {
     const { authUser } = useAuthContext()
@@ -15,6 +31,77 @@ const Dashboard = () => {
             <LoadingErrorWraper loading={!authUser}>
                 <UserBalance />
             </LoadingErrorWraper>
+        </Box>
+    )
+}
+
+const LineChart = () => {
+    const [balance, setBalance] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const getUserBalanceInformation = useCallback(async () => {
+        const [data, error] = await useFetch(`balance?page=1&perPages=${'10000'}`, 'GET', null, true);
+        if (data) {
+            setBalance(data.data)
+            setLoading(false)
+        } else {
+            setLoading(false)
+            setError(error)
+        }
+    }, [])
+
+    useEffect(() => {
+        getUserBalanceInformation()
+    }, [getUserBalanceInformation]);
+
+    return (
+        <LoadingErrorWraper loading={loading}>
+            <LineInner balance={balance} />
+        </LoadingErrorWraper>
+    )
+}
+
+const LineInner = ({balance}) => {
+    const bal = balance.balanceHistory.sort((a,b) => a.id - b.id)
+    const options = {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top',
+            },
+            title: {
+                display: true,
+                text: 'Balance',
+            },
+        },
+        scales:{
+            y:{
+                min: -100,
+                max: 300000,
+            }
+        }
+    };
+
+    const labels = bal.map(item => item.created_at.slice(0,9));
+
+    const data = {
+        labels,
+        datasets: [
+            {
+                labels: 'Balance',
+                data: bal.map(item => item.total),
+                borderColor: 'rgb(255, 99, 132)',
+                backgroundColor: 'rgba(255, 99, 132, 0.5)',
+            },
+        ],
+    };
+
+
+    return (
+        <Box display='flex' minWidth='67%' marginTop={2} bgcolor='whitesmoke' maxHeight='50em' justifyContent='center' alignItems='center' gap={2} padding={4} flexDirection='column' borderRadius={4} boxShadow={'6px 6px 16px #f8b64c88'}>
+            <Typography alignSelf='flex-start' variant="h5">Historico Balance</Typography>
+            {balance?.balanceHistory?.length &&
+                <Line options={options} data={data} />
+            }
         </Box>
     )
 }
@@ -29,14 +116,14 @@ const UserBalance = () => {
     const [perPage, setPerPage] = useState(10);
 
     const getUserBalanceInformation = useCallback(async () => {
-        const [data,error] = await useFetch(`balance?page=${page}&perPages=${perPage}`,'GET',null,true);
-        if(data) {
+        const [data, error] = await useFetch(`balance?page=${page}&perPages=${perPage}`, 'GET', null, true);
+        if (data) {
             setUserBalance(data.data)
             setLoading(false)
-        }else{
+        } else {
             setError(error)
         }
-    },[page,perPage])
+    }, [page, perPage])
 
     useEffect(() => {
         getUserBalanceInformation()
@@ -51,6 +138,7 @@ const UserBalance = () => {
                 setPerPage={setPerPage}
                 perPage={perPage}
             />
+            <LineChart />
         </LoadingErrorWraper>
     );
 }
@@ -64,7 +152,7 @@ const BalanceInner = ({
 }) => {
     const [newBalanceModal, setNewBalanceModal] = useState(false)
     const [movementType, setMovementType] = useState('')
-    const BALANCE_TYPE = {in: 'Ingreso', out: 'Egreso'}
+    const BALANCE_TYPE = { in: 'Ingreso', out: 'Egreso' }
     const BALANCE_CATEGORY_COLOR = {
         Otro: 'grey',
         Transferencia: 'orange',
@@ -88,7 +176,7 @@ const BalanceInner = ({
             field: 'category',
             headerName: 'Tipo',
             minWidth: 150,
-            renderCell: row => <div><Chip style={{ backgroundColor: BALANCE_CATEGORY_COLOR[row.row.category.name], color:BALANCE_CATEGORY_FONT_COLOR[row.row.category.name], fontWeight:'bold' }} variant="filled" label={row.row.category.name} /></div>
+            renderCell: row => <div><Chip style={{ backgroundColor: BALANCE_CATEGORY_COLOR[row.row.category.name], color: BALANCE_CATEGORY_FONT_COLOR[row.row.category.name], fontWeight: 'bold' }} variant="filled" label={row.row.category.name} /></div>
         },
         { field: 'ammount', headerName: 'Monto', minWidth: 150, renderCell: row => <div style={{ color: row.row.type === 'out' ? 'red' : 'green' }}>{`${row.row.type === 'out' ? '-' : ''} $ ${row.row.ammount}`}</div> },
         { field: 'total', headerName: 'Balance Total', minWidth: 150, renderCell: row => <div>{`$ ${row.row.total}`}</div> },
@@ -143,7 +231,7 @@ const BalanceInner = ({
     )
 }
 
-const NewBalanceForm = ({movementType}) => {
+const NewBalanceForm = ({ movementType }) => {
     const [error, setError] = useState(null)
     const [basicData, setBasicData] = useState(null)
     const [loading, setLoading] = useState(null)
@@ -164,17 +252,17 @@ const NewBalanceForm = ({movementType}) => {
 
     useEffect(() => {
         getBasicData()
-    },[getBasicData])
+    }, [getBasicData])
 
     const handleSubmit = async e => {
         e.preventDefault();
         setLoading(true)
 
-        let  url = ''
+        let url = ''
 
-        if(movementType === 'in') {
-            url = '/active'  
-        }else if (movementType == 'out') {
+        if (movementType === 'in') {
+            url = '/active'
+        } else if (movementType == 'out') {
             url = '/pasive'  
         }
 
