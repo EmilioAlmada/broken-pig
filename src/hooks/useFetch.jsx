@@ -1,4 +1,4 @@
-import clienteAxios from "../config/clienteAxios"
+import clienteAxios from "../helpers/clientAxios"
 
 const useFetch = async (
     url = null,
@@ -15,14 +15,20 @@ const useFetch = async (
             method: usedMethod,
             url: url,
             responseType: 'json',
-            auth: auth ? `Bearer ${token}` : '',
+            // auth: auth ? `Bearer ${token}` : '',
+            headers: auth ? {
+                'Authorization': `Bearer ${token}`
+            } : null,
         }
         :
         {
             method: usedMethod,
             url: url,
             responseType: 'json',
-            auth: auth ? `Bearer ${token}` : '',
+            // auth: auth ? `Bearer ${token}` : '',
+            headers: auth ? {
+                'Authorization': `Bearer ${token}`
+            } : null,
             data: data ? data : {},
         }
 

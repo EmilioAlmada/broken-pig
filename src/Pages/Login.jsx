@@ -1,114 +1,85 @@
 import { useNavigate } from 'react-router-dom'
-import { Container, Box, TextField, DatePicker, Button } from '@mui/material'
+import { Container, Box, TextField, Button, FormLabel, CircularProgress, Paper, Typography } from '@mui/material'
 import LoadingErrorWraper from '../Components/LoadingErrorWraper'
 import { useState } from 'react'
+import useFetch from '../hooks/useFetch'
+import { useAuthContext } from '../Auth/AuthProvider'
+import pig from '../../public/pig.svg'
 
 const Login = () => {
-
+    const { setAuthUser } = useAuthContext();
     const navigate = useNavigate()
     const [error, setError] = useState(null)
-    const [regData, setRegData] = useState({
-        name: '',
-        lastName: '',
+    const [loading, setLoading] = useState(false)
+    const [loginData, setLoginData] = useState({
         email: '',
         password: '',
-        passwordCheck: '',
-        birthdate: '',
     });
 
     const handleSubmit = async e => {
         e.preventDefault();
-        // /* Validación de campos */
-        // if ([nombre, apellido, email, contraseña, repetirPassword].includes('')) {
-        //     setAlerta({
-        //         msg: 'Todos los campos son obligatorios',
-        //         error: true
-        //     })
-        //     return
-        // }
+        setLoading(true)
 
-        // if (contraseña !== repetirPassword) {
-        //     setAlerta({
-        //         msg: 'No coinciden los password',
-        //         error: true
-        //     })
-        //     return
-        // }
-
-        // if (contraseña.length < 6) {
-        //     setAlerta({
-        //         msg: 'El password debe tener al menos 6 caracteres',
-        //         error: true
-        //     })
-        //     return
-        // }
-
-        setAlerta({})
-
-        const [data, error] = await useFetch('/register', 'POST', regData);
+        const [data, error] = await useFetch('/login', 'POST', loginData);
         if (data) {
             localStorage.setItem('token', data.token)
+            localStorage.setItem('user', JSON.stringify(data.data))
+            setAuthUser(data.data)
             navigate('/')
             setLoading(false)
         } else {
-            setAlerta({
-                msg: error.response.data.msg,
-                error: true
-            })
+            setError(error.response.data.message)
+            setLoading(false)
         }
-  }
+    }
 
     const handleChange = (event) => {
+        setError(null)
         const field = event.target.name;
         const value = event.target.value;
-        setRegData({ ...regData, [field]: value })
+        setLoginData({ ...loginData, [field]: value })
     };
 
     return (
-        <Container>
-            <Box>
-                <LoadingErrorWraper error={error}>
-                    <form onSubmit={handleSubmit}>
-                        <TextField
-                            id='name'
-                            name='name'
-                            type='text'
-                            value={regData.name}
-                            handleChange={handleChange}
-                        />
-                        <TextField
-                            id='lastName'
-                            name='lastName'
-                            type='text'
-                            value={regData.lastName}
-                            handleChange={handleChange}
-                        />
-                        <TextField
-                            id='password'
-                            name='password'
-                            type='password'
-                            value={regData.password}
-                            handleChange={handleChange}
-                        />
-                        <TextField
-                            id='email'
-                            name='email'
-                            type='email'
-                            value={regData.email}
-                            handleChange={handleChange}
-                        />
-                        <DatePicker
-                            id='birthdate'
-                            name='birthdate'
-                            type='birthdate'
-                            value={regData.birthdate}
-                            handleChange={handleChange}
-                        />
-                        <Button type='submit'>Registrame</Button>
-                    </form>
-                </LoadingErrorWraper>
-            </Box>
-        </Container>
+        <Box display='flex' justifyContent='center' alignItems='center' flexDirection='column' gap={2} minWidth='90%' padding={4} marginTop={4}>
+            <Typography color='white' variant='h3'>Broken-Pig</Typography>
+            <Typography color='white' variant='h5'>Gestiona tus finanzas de forma profesional</Typography>
+                <Box bgcolor='whitesmoke' display='flex' flexDirection='column' justifyContent='center' width='40%' padding={4} gap={2} borderRadius={4} boxShadow={'6px 6px 16px #f8b64c88'}>
+                    <Box display='flex' justifyContent='center' gap={2} alignItems='center' flexDirection='column'>
+                        <img src={pig} width={90}/>
+                        <Typography variant='h5'>Ingreso</Typography>
+                    </Box>
+                    <LoadingErrorWraper error={error}>
+                        <form onSubmit={handleSubmit}>
+                            <Box display='flex' flexDirection='column' gap={1}>
+                                <FormLabel title='Mail' htmlFor='email'>Mail</FormLabel>
+                                <TextField
+                                    required
+                                    size='small'
+                                    id='email'
+                                    name='email'
+                                    type='email'
+                                    value={loginData.email}
+                                    onChange={handleChange}
+                                />
+                                <FormLabel title='Contraseña' htmlFor='password'>Contraseña</FormLabel>
+                                <TextField
+                                    required
+                                    id='password'
+                                    name='password'
+                                    size='small'
+                                    type='password'
+                                    value={loginData.password}
+                                    onChange={handleChange}
+                                />
+                                <Button disabled={loading} variant='contained' type='submit'>{loading ? <CircularProgress /> : 'Ingresar'}</Button>
+                            </Box>
+                        </form>
+                    </LoadingErrorWraper>
+                    <Button variant='outlined' onClick={() => navigate('/register')}>Registrarme</Button>
+                    <Button onClick={() => navigate('/askpasswordrecover')}>Olvide mi contraseña</Button>
+                </Box>
+        </Box>
     )
 }
 
