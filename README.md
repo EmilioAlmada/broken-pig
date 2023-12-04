@@ -1,8 +1,22 @@
-# React + Vite
+#   Broken - Pig - Front End
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+##  Gestion de gastos y transferencias virtuales.
 
-Currently, two official plugins are available:
+### Requerimientos para ejecutar el proyecto de forma local:
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+*   Tener instalado node version 20.*
+
+### Comandos para correr el proyecto de forma local:
+
+Pedir los datos de ambiente al adminstrador del proyecto. (.env)
+
+```
+npm install
+```
+```
+npm run dev
+```
+
+####    Listo! el proyecto deberia estar corriendo en http://localhost:3000
+
+Ante cualquier inconveniente consultar con el administrador tecnico del proyecto.

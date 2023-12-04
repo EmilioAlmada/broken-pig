@@ -4,7 +4,7 @@ import LoadingErrorWraper from "../Components/LoadingErrorWraper";
 import { Box, Button, Chip, CircularProgress, Container, FormLabel, IconButton, MenuItem, Modal, Paper, Select, TextField, Typography } from "@mui/material";
 import useFetch from "../hooks/useFetch";
 import { DataGrid } from "@mui/x-data-grid";
-import { Add, ArrowBackIos, ArrowForwardIos, CurrencyExchange, InsertInvitation } from "@mui/icons-material";
+import { Add, ArrowBackIos, ArrowForwardIos, Backspace, CurrencyExchange, InsertInvitation } from "@mui/icons-material";
 
 const Transactions = () => {
     const { authUser } = useAuthContext()
@@ -25,29 +25,30 @@ const UserContacts = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [contacts, setContacts] = useState(null);
+    const [filter, setFilter] = useState('');
 
     const getUserContacts = useCallback(async () => {
-        const [data,error] = await useFetch(`/contacts`,'GET',null,true);
+        const [data,error] = await useFetch(`/contacts?name=${filter}`,'GET',null,true);
         if(data) {
             setContacts(data.data)
             setLoading(false)
         }else{
             setError(error)
         }
-    },[])
+    },[filter])
 
     useEffect(() => {
         getUserContacts()
-    }, [getUserContacts]);
+    }, [getUserContacts,filter]);
 
     return (
         <LoadingErrorWraper loading={loading} error={error}>
-            <ContactList contacts={contacts} />
+            <ContactList filter={filter} setFilter={setFilter} contacts={contacts} />
         </LoadingErrorWraper>
     )
 }
 
-const ContactList = ({contacts}) => {
+const ContactList = ({contacts,filter,setFilter}) => {
     
     const [newTransactionModal, setNewTransactionModal] = useState(false)
     const [newContactModal, setNewContactModal] = useState(false)
@@ -73,20 +74,25 @@ const ContactList = ({contacts}) => {
 
     return (
         <>
-            <Box display='flex' bgcolor='whitesmoke'  boxShadow={'6px 6px 16px #f8b64c88'} borderRadius={4} minWidth='60%' justifyContent='center' alignItems='center' gap={2} padding={2} flexDirection='column'>
+            <Box display='flex' bgcolor='whitesmoke' boxShadow={'6px 6px 16px #f8b64c88'} borderRadius={4} minWidth='60%' justifyContent='center' alignItems='center' gap={2} padding={2} flexDirection='column'>
                 <Typography alignSelf='flex-start' variant="h4">Contactos</Typography>
-                {contacts?.length ?
-                    <DataGrid
-                        columns={columns}
-                        rows={contacts}
-                        disableRowSelectionOnClick
-                        hideFooter
-                        disableColumnFilter
-                        rowSelection={false}
-                    />
-                    :
-                    <Typography>No tiene ningun contacto</Typography>
-                }
+                <TextField
+                    name="name"
+                    label="Buscar por nombre"
+                    placeholder="Buscar por nombre"
+                    value={filter}
+                    size="small"
+                    onChange={e => setFilter(e.target.value)}
+                />
+                <DataGrid
+                    columns={columns}
+                    rows={contacts}
+                    disableRowSelectionOnClick
+                    hideFooter
+                    disableColumnFilter
+                    rowSelection={false}
+                />
+                :
                 <Box display='flex' justifyContent='space-around' gap={2}>
                     <Button onClick={() => setNewContactModal(true)} variant="contained" style={{ minWidth: 170, textAlign: 'center', display: 'flex', justifyContent: 'baseline', alignItems: 'center' }}><Add />Añadir contacto</Button>
                 </Box>
@@ -107,20 +113,25 @@ const UserTransactions = () => {
     const [error, setError] = useState(null);
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
+    const [filters, setFilters] = useState({
+        ammount_from:'',
+        ammount_to:'',
+        to:'',
+    });
 
     const getUserBalanceInformation = useCallback(async () => {
-        const [data, error] = await useFetch(`/transactions?page=${page}&perPages=${perPage}`, 'GET', null, true);
+        const [data, error] = await useFetch(`/transactions?page=${page}&perPages=${perPage}&to=${filters.to}&ammount_from=${filters.ammount_from}&ammount_to=${filters.ammount_to}`, 'GET', null, true);
         if (data) {
             setTransactions(data.data)
             setLoading(false)
         }else{
             setError(error)
         }
-    },[page,perPage])
+    },[page,perPage,filters])
 
     useEffect(() => {
         getUserBalanceInformation()
-    }, [getUserBalanceInformation, page, perPage]);
+    }, [getUserBalanceInformation, page, perPage,filters]);
 
     return (
         <LoadingErrorWraper loading={loading} error={error}>
@@ -130,6 +141,8 @@ const UserTransactions = () => {
                 setPage={setPage}
                 setPerPage={setPerPage}
                 perPage={perPage}
+                filters={filters}
+                setFilters={setFilters}
             />
         </LoadingErrorWraper>
     );
@@ -141,6 +154,8 @@ const TransactionsInner = ({
     setPerPage,
     setPage,
     page,
+    filters,
+    setFilters
 }) => {
     const [newTransactionModal, setNewTransactionModal] = useState(false)
     const columns = [
@@ -149,6 +164,11 @@ const TransactionsInner = ({
         { field: 'created_at', headerName: 'Fecha', minWidth: 200, renderCell: row => <div>{row.row.created_at.slice(0, 10)}</div> },
     ]
 
+    const handleChange = (event) => {
+        const field = event.target.name;
+        const value = event.target.value;
+        setFilters({ ...filters, [field]: value })
+    };
 
     const handleModalOpen = () => {
         setNewTransactionModal(true)
@@ -158,8 +178,8 @@ const TransactionsInner = ({
         <>
             <Box display='flex' bgcolor='whitesmoke' maxHeight='35em' boxShadow={'6px 6px 16px #f8b64c88'} borderRadius={4} minWidth='60%' justifyContent='center' alignItems='center' gap={2} padding={2} flexDirection='column'>
                 <Typography alignSelf='flex-start' variant="h4">Transferencias</Typography>
-                {transactions?.transactionHistory?.length ?
                     <>
+                        {/* <TransactionsFilters filters={filters} setFilters={setFilters} handleChange={handleChange} />     */}
                         <DataGrid
                             columns={columns}
                             rows={transactions.transactionHistory}
@@ -176,9 +196,6 @@ const TransactionsInner = ({
                             totalRecords={transactions.totalRecords}
                         />
                     </>
-                    :
-                    <Typography>No tiene ningun registro de transferencia</Typography>
-                }
                 <Box display='flex' justifyContent='space-around' gap={2}>
                     <Button onClick={() => handleModalOpen('out')} variant="contained" style={{ minWidth: 170, textAlign: 'center', display: 'flex', justifyContent: 'baseline', alignItems: 'center' }}><Add />Nueva Transferencia</Button>
                 </Box>
@@ -188,6 +205,52 @@ const TransactionsInner = ({
             </Modal>
         </>
     )
+}
+
+const TransactionsFilters = ({
+    filters,
+    handleChange,
+    setFilters,
+}) => {
+
+    return (
+        <Box display='flex' alignItems='center' justifyContent='center' gap={1} width='90%'>
+            <TextField
+                size="small"
+                type="text"
+                style={{width: '11em'}}
+                label='Destinatario'
+                name='to'
+                value={filters.to}
+                onChange={handleChange}
+            />
+            <TextField
+                size="small"
+                name='ammount_from'
+                type="number"
+                style={{width: '11em'}}
+                label='Monto Desde'
+                value={filters.from}
+                onChange={handleChange}
+            />
+            <TextField
+                size="small"
+                name='ammount_to'
+                type="number"
+                style={{width: '11em'}}
+                label='Monto Hasta'
+                value={filters.to}
+                onChange={handleChange}
+            />
+            <IconButton color="primary" onClick={() => setFilters({
+                ammount_from: '',
+                ammount_to: '',
+                to: '',
+                name: '',
+            })}><Backspace /></IconButton>
+        </Box>
+    )
+
 }
 
 export const PaginationComponent = ({perPage, page, setPage, setPerPage, totalRecords}) => {
@@ -283,7 +346,7 @@ const NewTransactionForm = ({cvuD = null, aliasD=''}) => {
     const [transferData, setTransferData] = useState({
         cvu: '',
         alias: '',
-        ammount: 0,
+        ammount: '',
     });
 
     useEffect(() => {

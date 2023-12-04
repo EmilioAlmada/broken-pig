@@ -44,6 +44,7 @@ const Register = () => {
                 password:'Contraseña y verificacion deben ser iguales',
                 passwordCheck:'Contraseña y verificacion deben ser iguales'
             })
+            setLoading(false)
             return
         }
 

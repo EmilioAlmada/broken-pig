@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { useAuthContext } from "../Auth/AuthProvider";
 import LoadingErrorWraper from "../Components/LoadingErrorWraper";
-import { Box, Button, Chip, CircularProgress, Container, FormLabel, IconButton, MenuItem, Modal, Paper, Select, TextField, Typography } from "@mui/material";
+import { Box, Button, Chip, CircularProgress, Container, FormControl, FormLabel, IconButton, InputLabel, MenuItem, Modal, Paper, Select, TextField, Typography } from "@mui/material";
 import useFetch from "../hooks/useFetch";
 import { DataGrid } from "@mui/x-data-grid";
-import { Add, ArrowBackIos, ArrowForwardIos } from "@mui/icons-material";
+import { Add, ArrowBackIos, ArrowForwardIos, Backspace, CleanHands, ClearAll, ClearAllOutlined, More, ZoomIn, ZoomOut } from "@mui/icons-material";
 import { PaginationComponent } from "./Transactions";
 // import { Chart as ChartJs } from "react-chartjs-2";
 import { Line } from "react-chartjs-2";
@@ -27,7 +27,7 @@ const Dashboard = () => {
     const { authUser } = useAuthContext()
 
     return (
-        <Box display='flex' flexDirection='column' padding={3} justifyContent='center' alignItems='center' width='100%'>
+        <Box display='flex' flexDirection='column' padding={3} jusfifyContent='center' alignItems='center' width='100%'>
             <LoadingErrorWraper loading={!authUser}>
                 <UserBalance />
             </LoadingErrorWraper>
@@ -61,8 +61,12 @@ const LineChart = () => {
 }
 
 const LineInner = ({balance}) => {
+    const [zoom,setZoom] = useState({
+        min:-100,
+        max:300000
+    })
     const bal = balance.balanceHistory.sort((a,b) => a.id - b.id)
-    const options = {
+    const options = useMemo(() => ({
         responsive: true,
         plugins: {
             legend: {
@@ -75,13 +79,13 @@ const LineInner = ({balance}) => {
         },
         scales:{
             y:{
-                min: -100,
-                max: 300000,
+                min: zoom.min,
+                max: zoom.max,
             }
         }
-    };
+    }),[zoom.min,zoom.max]);
 
-    const labels = bal.map(item => item.created_at.slice(0,9));
+    const labels = bal.map(item => item.created_at.slice(0,10));
 
     const data = {
         labels,
@@ -99,8 +103,13 @@ const LineInner = ({balance}) => {
     return (
         <Box display='flex' minWidth='67%' marginTop={2} bgcolor='whitesmoke' maxHeight='50em' justifyContent='center' alignItems='center' gap={2} padding={4} flexDirection='column' borderRadius={4} boxShadow={'6px 6px 16px #f8b64c88'}>
             <Typography alignSelf='flex-start' variant="h5">Historico Balance</Typography>
-            {balance?.balanceHistory?.length &&
-                <Line options={options} data={data} />
+            {balance?.balanceHistory?.length ?
+                <>
+                    <Box alignSelf='flex-start' display='flex' alignItems='center'><Typography variant="button">Zoom:</Typography><IconButton onClick={() => setZoom({min:zoom.min - 10, max:zoom.max + 50000})}><ZoomOut /></IconButton><IconButton onClick={() => setZoom({min:zoom.min + 10, max:zoom.max - 50000})}><ZoomIn /></IconButton></Box>
+                    <Line options={options} data={data} />
+                </>
+                :
+                <Typography>No tiene ningun registro en el balance</Typography>
             }
         </Box>
     )
@@ -114,31 +123,42 @@ const UserBalance = () => {
     const [error, setError] = useState(null);
     const [page, setPage] = useState(1);
     const [perPage, setPerPage] = useState(10);
+    const [filters, setFilters] = useState({
+        from:'',
+        to:'',
+        category:'',
+        type:'',
+    });
 
     const getUserBalanceInformation = useCallback(async () => {
-        const [data, error] = await useFetch(`balance?page=${page}&perPages=${perPage}`, 'GET', null, true);
+        const [data, error] = await useFetch(`balance?page=${page}&perPages=${perPage}&from=${filters.from}&to=${filters.to}&category=${filters.category}&type=${filters.type}`, 'GET', null, true);
         if (data) {
             setUserBalance(data.data)
             setLoading(false)
         } else {
             setError(error)
         }
-    }, [page, perPage])
+    }, [page, perPage, filters])
 
     useEffect(() => {
         getUserBalanceInformation()
-    }, [getUserBalanceInformation, page, perPage]);
+    }, [getUserBalanceInformation, page, perPage, filters]);
 
     return (
         <LoadingErrorWraper loading={loading} error={error}>
-            <BalanceInner
-                balance={userBalance}
-                page={page}
-                setPage={setPage}
-                setPerPage={setPerPage}
-                perPage={perPage}
-            />
-            <LineChart />
+            <Box minWidth='80%' maxWidth='90%'>
+                <TradingView />
+                <BalanceInner
+                    balance={userBalance}
+                    page={page}
+                    setPage={setPage}
+                    setPerPage={setPerPage}
+                    perPage={perPage}
+                    filters={filters}
+                    setFilters={setFilters}
+                />
+                <LineChart />
+            </Box>
         </LoadingErrorWraper>
     );
 }
@@ -149,6 +169,8 @@ const BalanceInner = ({
     setPerPage,
     setPage,
     page,
+    filters,
+    setFilters,
 }) => {
     const [newBalanceModal, setNewBalanceModal] = useState(false)
     const [movementType, setMovementType] = useState('')
@@ -156,18 +178,18 @@ const BalanceInner = ({
     const BALANCE_CATEGORY_COLOR = {
         Otro: 'grey',
         Transferencia: 'orange',
-        Mercado: 'green',
-        Inversion: 'purple',
-        Alquiler: 'red',
-        Expensas: 'yellow',
-        Salario: 'magenta',
+        Mercado: '#a3e376',
+        Inversion: '#8660cc',
+        Alquiler: '#f2494e',
+        Expensas: '#f5da45',
+        Salario: '#f578dc',
     }
     const BALANCE_CATEGORY_FONT_COLOR = {
         Otro: 'white',
         Transferencia: 'black',
-        Mercado: 'white',
+        Mercado: 'black',
         Inversion: 'white',
-        Alquiler: 'white',
+        Alquiler: 'black',
         Expensas: 'black',
         Salario: 'black',
     }
@@ -188,6 +210,12 @@ const BalanceInner = ({
         setMovementType(moveType)
         setNewBalanceModal(true)
     }
+    
+    const handleChange = (event) => {
+        const field = event.target.name;
+        const value = event.target.value;
+        setFilters({ ...filters, [field]: value })
+    };
 
     return (
         <>
@@ -196,8 +224,8 @@ const BalanceInner = ({
                 <Box border={`solid 1px ${balance.currentAmmount > 0 ? 'green' : 'red'}`} borderRadius='1em 0.1em 1em 0.1em' padding={1} alignSelf='flex-end'>
                     <Typography variant="h6" color={balance.currentAmmount > 0 ? 'green' : 'error'}>{`Balance actual : $ ${parseFloat(balance.currentAmmount).toLocaleString()}`}</Typography>
                 </Box>
-                {balance.balanceHistory.length ?
                     <>
+                        <BalanceFilters filters={filters} setFilters={setFilters} handleChange={handleChange} />    
                         <DataGrid
                             columns={columns}
                             rows={balance?.balanceHistory}
@@ -214,9 +242,6 @@ const BalanceInner = ({
                             totalRecords={balance.totalRecords}
                         />
                     </>
-                    :
-                    <Typography>No tiene ningun registro en el balance</Typography>
-                }
                 <Box display='flex' justifyContent='space-around' gap={2}>
                     <Button onClick={() => handleModalOpen('out')} color="error" variant="contained" style={{ minWidth: 170, textAlign: 'center', display: 'flex', justifyContent: 'baseline', alignItems: 'center' }}><Add />Nuevo Gasto</Button>
                     <Button onClick={() => handleModalOpen('in')} color="success" variant="contained" style={{ minWidth: 170, textAlign: 'center', display: 'flex', justifyContent: 'baseline', alignItems: 'center' }}><Add />Nuevo Ingreso</Button>
@@ -229,6 +254,87 @@ const BalanceInner = ({
             </Modal>
         </>
     )
+}
+
+const BalanceFilters = ({
+    filters,
+    handleChange,
+    setFilters,
+}) => {
+
+    const [basicData, setBasicData] = useState(null)
+    const getBasicData = useCallback(async () => {
+        const [data, error] = await useFetch('/basicData');
+        if (data) {
+            setBasicData(data.data)
+        } else {
+            console.error(error)
+        }
+    }, [])
+
+    useEffect(() => {
+        getBasicData()
+    }, [getBasicData])
+
+    if (!Boolean(basicData)) return <Box minWidth={200}><CircularProgress /></Box>
+
+    return (
+        <Box display='flex' alignItems='center' justifyContent='center' gap={1} width='90%'>
+            <TextField
+                size="small"
+                name='from'
+                type="number"
+                style={{width: '11em'}}
+                label='Balance desde'
+                value={filters.from}
+                onChange={handleChange}
+            />
+            <TextField
+                size="small"
+                type="number"
+                style={{width: '11em'}}
+                label='Balance hasta'
+                name='to'
+                value={filters.to}
+                onChange={handleChange}
+            />
+            <TextField
+                label="Tipo"
+                name="category"
+                nonce=""
+                style={{minWidth: '11em'}}
+                select
+                size="small"
+                value={filters.category}
+                onChange={handleChange}
+            >
+                <MenuItem key={180} value={''}>Ninguno</MenuItem>
+                {basicData.categories.map(item => (
+                    <MenuItem key={item.id} value={item.id}>{item.name}</MenuItem>
+                ))}
+            </TextField>
+            <TextField
+                label="Egreso/Ingreso"
+                name="type"
+                style={{minWidth: '11em'}}
+                select
+                size="small"
+                value={filters.type}
+                onChange={handleChange}
+            >
+                <MenuItem key={0} value={''}>Ninguno</MenuItem>
+                <MenuItem key={1} value={'in'}>Ingreso</MenuItem>
+                <MenuItem key={2} value={'out'}>Egreso</MenuItem>
+            </TextField>
+            <IconButton color="primary" onClick={() => setFilters({
+                from: '',
+                to: '',
+                category: '',
+                type: '',
+            })}><Backspace /></IconButton>
+        </Box>
+    )
+
 }
 
 const NewBalanceForm = ({ movementType }) => {
@@ -327,4 +433,45 @@ const NewBalanceForm = ({ movementType }) => {
             </LoadingErrorWraper>
         </Box>
     )
+}
+const TradingView = () => {
+    const container = useRef();
+    useEffect(
+        () => {
+            const script = document.createElement("script");
+            script.src = "https://s3.tradingview.com/external-embedding/embed-widget-tickers.js";
+            script.type = "text/javascript";
+            script.async = true;
+            script.innerHTML = `
+                        {
+                            "symbols": [
+                                {
+                                    "proName": "FX_IDC:EURARS"
+                                    "description": "Euros",
+                                    {
+                                        "description": "Dolar",
+                                        "proName": "FX_IDC:USDARS"
+                                    },
+                                    {
+                                        "description": "Real",
+                                        "proName": "FX_IDC:BRLARS"
+                                    }
+                                ],
+                                "colorTheme": "light",
+                                "isTransparent": false,
+                                "showSymbolLogo": true,
+                                "locale": "es"
+                            }
+                        },
+                    `;
+            container.current.appendChild(script);
+        },
+        []
+    );
+
+    return (
+        <div className="tradingview-widget-container" ref={container}>
+            <div className="tradingview-widget-container__widget"></div>
+        </div>
+    );
 }

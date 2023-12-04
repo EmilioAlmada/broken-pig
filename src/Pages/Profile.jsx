@@ -93,79 +93,14 @@ const Profile = () => {
                     <Typography variant='h5'>Perfil de usuario</Typography>
                 </Box>
                 <LoadingErrorWraper error={error} loading={pageLoading} succesSpecific={success}>
-                    <form onSubmit={handleSubmit}>
-                        <Box display='flex' flexDirection='column' gap={1}>
-                            <FormLabel title='Mail' htmlFor='mail'>Mail</FormLabel>
-                            <TextField
-                                required
-                                id='mail'
-                                name='mail'
-                                type='text'
-                                size='small'
-                                disabled
-                                value={updateData.email}
-                            />
-                            <FormLabel title='Nombre' htmlFor='name'>Nombre</FormLabel>
-                            <TextField
-                                required
-                                id='name'
-                                name='name'
-                                error={Boolean(updateError.name)}
-                                helperText={updateError.name}
-                                type='text'
-                                size='small'
-                                value={updateData.name}
-                                onChange={handleChange}
-                            />
-                            <FormLabel title='Apellido' htmlFor='lastName'>Apellido</FormLabel>
-                            <TextField
-                                required
-                                id='lastName'
-                                name='lastName'
-                                error={Boolean(updateError.lastName)}
-                                helperText={updateError.lastName}
-                                type='text'
-                                size='small'
-                                value={updateData.lastName}
-                                onChange={handleChange}
-                            />
-                            <FormLabel title='Alias' htmlFor='alias'>Alias</FormLabel>
-                            <TextField
-                                required
-                                size='small'
-                                id='alias'
-                                error={Boolean(updateError.alias)}
-                                helperText={updateError.alias}
-                                name='alias'
-                                type='text'
-                                value={updateData.alias}
-                                onChange={handleChange}
-                            />
-                            <FormLabel title='Fecha de nacimiento' htmlFor='birthdate'>Fecha de nacimiento</FormLabel>
-                            <input
-                                required
-                                style={{
-                                    height: '40px',
-                                    borderRadius: '5px',
-                                    color: 'grey',
-                                    border: '1px solid',
-                                    borderColor: 'lightgray'
-                                }}
-                                type='date'
-                                name='birthdate'
-                                id='birthday'
-                                value={updateData.birthdate}
-                                onChange={handleChange}
-                            />
-                            <Box display='flex' width='100%' justifyContent='center' alignItems='center' margin='1em 0 0.1em 0'>
-                                <Typography fontWeight='bold' textAlign='center'>{`CVU: ${updateData.cvu}`}</Typography><IconButton onClick={navigator.clipboard.writeText(updateData.cvu)}><CopyAll /></IconButton>
-                            </Box>
-                            <Box display='flex' width='100%' justifyContent='center' alignItems='center' margin='0 0 1em 0'>
-                                <Typography fontWeight='bold' textAlign='center'>{`Alias: ${authUser.alias}`}</Typography><IconButton onClick={navigator.clipboard.writeText(updateData.alias)}><CopyAll /></IconButton>
-                            </Box>
-                            <Button variant='contained' disabled={loading} type='submit'>{loading ? <CircularProgress /> : 'Actualizar'}</Button>
-                        </Box>
-                    </form>
+                    <InnerForm
+                        handleChange={handleChange}
+                        handleSubmit={handleSubmit}
+                        updateData={updateData}
+                        updateError={updateError}
+                        loading={loading}
+                        authUser={authUser}
+                    />
                 </LoadingErrorWraper>
             </Box>
         </Box>
@@ -173,3 +108,87 @@ const Profile = () => {
 }
 
 export default Profile
+
+const InnerForm = ({handleSubmit,handleChange,updateData,updateError,loading, authUser}) => {
+
+    const handleCopy = (text) => {
+        navigator.clipboard.writeText('')
+        navigator.clipboard.writeText(text)
+    }
+
+    return (
+        <form onSubmit={handleSubmit}>
+            <Box display='flex' flexDirection='column' gap={1}>
+                <FormLabel title='Mail' htmlFor='mail'>Mail</FormLabel>
+                <TextField
+                    required
+                    id='mail'
+                    name='mail'
+                    type='text'
+                    size='small'
+                    disabled
+                    value={updateData.email}
+                />
+                <FormLabel title='Nombre' htmlFor='name'>Nombre</FormLabel>
+                <TextField
+                    required
+                    id='name'
+                    name='name'
+                    error={Boolean(updateError.name)}
+                    helperText={updateError.name}
+                    type='text'
+                    size='small'
+                    value={updateData.name}
+                    onChange={handleChange}
+                />
+                <FormLabel title='Apellido' htmlFor='lastName'>Apellido</FormLabel>
+                <TextField
+                    required
+                    id='lastName'
+                    name='lastName'
+                    error={Boolean(updateError.lastName)}
+                    helperText={updateError.lastName}
+                    type='text'
+                    size='small'
+                    value={updateData.lastName}
+                    onChange={handleChange}
+                />
+                <FormLabel title='Alias' htmlFor='alias'>Alias</FormLabel>
+                <TextField
+                    required
+                    size='small'
+                    id='alias'
+                    error={Boolean(updateError.alias)}
+                    helperText={updateError.alias}
+                    name='alias'
+                    type='text'
+                    value={updateData.alias}
+                    onChange={handleChange}
+                />
+                <FormLabel title='Fecha de nacimiento' htmlFor='birthdate'>Fecha de nacimiento</FormLabel>
+                <input
+                    required
+                    style={{
+                        height: '40px',
+                        borderRadius: '5px',
+                        color: 'grey',
+                        border: '1px solid',
+                        borderColor: 'lightgray'
+                    }}
+                    type='date'
+                    name='birthdate'
+                    id='birthday'
+                    value={updateData.birthdate}
+                    onChange={handleChange}
+                />
+                <Box display='flex' width='100%' justifyContent='center' alignItems='center' margin='1em 0 0.1em 0'>
+                    <Typography fontWeight='bold' textAlign='center'>{`CVU: ${updateData.cvu}`}</Typography><IconButton onClick={() => handleCopy(updateData.cvu)}><CopyAll /></IconButton>
+                </Box>
+                <Box display='flex' width='100%' justifyContent='center' alignItems='center' margin='0 0 1em 0'>
+                    <Typography fontWeight='bold' textAlign='center'>{`Alias: ${authUser.alias}`}</Typography><IconButton onClick={() => handleCopy(updateData.alias)}><CopyAll /></IconButton>
+                </Box>
+                <Button variant='contained' disabled={loading} type='submit'>{loading ? <CircularProgress /> : 'Actualizar'}</Button>
+            </Box>
+        </form>
+    )
+}
