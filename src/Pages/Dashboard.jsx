@@ -15,6 +15,8 @@ import {
     LinearScale,
     PointElement
 } from "chart.js";
+import { Ticker } from "react-ts-tradingview-widgets";
+
 
 ChartJS.register(
     LineElement,
@@ -147,7 +149,30 @@ const UserBalance = () => {
     return (
         <LoadingErrorWraper loading={loading} error={error}>
             <Box minWidth='80%' maxWidth='90%'>
-                <TradingView />
+                <Ticker colorTheme="light"  symbols={
+                    [
+                        {
+                            "proName": "FX_IDC:USDARS",
+                            "title": "Dolar"
+                        },
+                        {
+                            "proName": "FX_IDC:BRLARS",
+                            "title": "Real"
+                        },
+                        {
+                            "proName": "FX_IDC:EURARS",
+                            "title": "Euro"
+                        },
+                        {
+                            "proName": "FX_IDC:UYUARS",
+                            "title": "Peso Uruguay"
+                        },
+                        {
+                            "proName": "FX_IDC:EURUSD",
+                            "title": "EUR/USD"
+                        },
+                    ]
+                }></Ticker>
                 <BalanceInner
                     balance={userBalance}
                     page={page}
@@ -434,44 +459,47 @@ const NewBalanceForm = ({ movementType }) => {
         </Box>
     )
 }
-const TradingView = () => {
-    const container = useRef();
-    useEffect(
-        () => {
-            const script = document.createElement("script");
-            script.src = "https://s3.tradingview.com/external-embedding/embed-widget-tickers.js";
-            script.type = "text/javascript";
-            script.async = true;
-            script.innerHTML = `
-                        {
-                            "symbols": [
-                                {
-                                    "proName": "FX_IDC:EURARS"
-                                    "description": "Euros",
-                                    {
-                                        "description": "Dolar",
-                                        "proName": "FX_IDC:USDARS"
-                                    },
-                                    {
-                                        "description": "Real",
-                                        "proName": "FX_IDC:BRLARS"
-                                    }
-                                ],
-                                "colorTheme": "light",
-                                "isTransparent": false,
-                                "showSymbolLogo": true,
-                                "locale": "es"
-                            }
-                        },
-                    `;
-            container.current.appendChild(script);
-        },
-        []
-    );
 
-    return (
-        <div className="tradingview-widget-container" ref={container}>
-            <div className="tradingview-widget-container__widget"></div>
-        </div>
-    );
-}
+// const TradingView = () => {
+//     const container = useRef();
+//     useEffect(
+//         () => {
+//             const script = document.createElement("script");
+//             script.src = "https://s3.tradingview.com/external-embedding/embed-widget-mini-symbol-overview.js";
+//             script.type = "text/javascript";
+//             script.async = true;
+//             script.innerHTML = `
+//                         {
+//                             "symbol": "FX_IDC:USDARS",
+//                             "width": 350,
+//                             "height": 220,
+//                             "locale": "es",
+//                             "dateRange": "12M",
+//                             "colorTheme": "light",
+//                             "isTransparent": false,
+//                             "autosize": false,
+//                             "largeChartUrl": ""
+//                         },
+//                         {
+//                             "symbol": "FX_IDC:EURARS",
+//                             "width": 350,
+//                             "height": 220,
+//                             "locale": "es",
+//                             "dateRange": "12M",
+//                             "colorTheme": "light",
+//                             "isTransparent": false,
+//                             "autosize": false,
+//                             "largeChartUrl": ""
+//                         },
+//                     `;
+//             container.current.appendChild(script);
+//         },
+//         []
+//     );
+
+//     return (
+//         <div className="tradingview-widget-container" ref={container}>
+//             <div className="tradingview-widget-container__widget"></div>
+//         </div>
+//     );
+// }
