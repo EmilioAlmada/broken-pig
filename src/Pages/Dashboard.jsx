@@ -225,8 +225,8 @@ const BalanceInner = ({
             minWidth: 150,
             renderCell: row => <div><Chip style={{ backgroundColor: BALANCE_CATEGORY_COLOR[row.row.category.name], color: BALANCE_CATEGORY_FONT_COLOR[row.row.category.name], fontWeight: 'bold' }} variant="filled" label={row.row.category.name} /></div>
         },
-        { field: 'ammount', headerName: 'Monto', minWidth: 150, renderCell: row => <div style={{ color: row.row.type === 'out' ? 'red' : 'green' }}>{`${row.row.type === 'out' ? '-' : ''} $ ${row.row.ammount}`}</div> },
-        { field: 'total', headerName: 'Balance Total', minWidth: 150, renderCell: row => <div>{`$ ${row.row.total}`}</div> },
+        { field: 'ammount', headerName: 'Monto', minWidth: 150, renderCell: row => <div style={{ color: row.row.type === 'out' ? 'red' : 'green' }}>{`${row.row.type === 'out' ? '-' : ''} $ ${Number(row.row.ammount).toLocaleString()}`}</div> },
+        { field: 'total', headerName: 'Balance Total', minWidth: 150, renderCell: row => <div>{`$ ${Number(row.row.total).toLocaleString()}`}</div> },
         { field: 'type', headerName: 'Egreso/Ingreso', minWidth: 150, renderCell: row => <div style={{ color: row.row.type === 'out' ? 'red' : 'green' }}>{BALANCE_TYPE[row.row.type]}</div> },
         { field: 'created_at', headerName: 'Fecha', minWidth: 150, renderCell: row => <div>{row.row.created_at.slice(0, 10)}</div> },
     ]

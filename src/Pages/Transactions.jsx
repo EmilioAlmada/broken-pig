@@ -4,7 +4,7 @@ import LoadingErrorWraper from "../Components/LoadingErrorWraper";
 import { Box, Button, Chip, CircularProgress, Container, FormLabel, IconButton, MenuItem, Modal, Paper, Select, TextField, Typography } from "@mui/material";
 import useFetch from "../hooks/useFetch";
 import { DataGrid } from "@mui/x-data-grid";
-import { Add, ArrowBackIos, ArrowForwardIos, Backspace, CurrencyExchange, InsertInvitation } from "@mui/icons-material";
+import { Add, ArrowBackIos, ArrowForwardIos, Backspace, Cancel, CurrencyExchange, Delete, InsertInvitation } from "@mui/icons-material";
 
 const Transactions = () => {
     const { authUser } = useAuthContext()
@@ -54,7 +54,7 @@ const ContactList = ({contacts,filter,setFilter}) => {
     const [newContactModal, setNewContactModal] = useState(false)
     const columns = [
         { field: 'name', headerName: 'Nombre', minWidth: 150, renderCell: row => <div>{row.row.name}</div> },
-        { field: 'cvu', headerName: 'CVU', minWidth: 180, renderCell: row => <div>{`${row.row.cvu}`}</div> },
+        { field: 'cvu', headerName: 'CVU', minWidth: 190, renderCell: row => <div>{`${row.row.cvu}`}</div> },
         { field: 'alias', headerName: 'Alias', minWidth: 150, renderCell: row => <div>{row.row.alias}</div> },
         { field: 'action', headerName: 'Transferir', minWidth: 150, renderCell: row => <div><IconButton onClick={() => handleModalOpen(row.row)}><CurrencyExchange /></IconButton></div> },
     ]
@@ -158,10 +158,13 @@ const TransactionsInner = ({
     setFilters
 }) => {
     const [newTransactionModal, setNewTransactionModal] = useState(false)
+    const [cancelTransactionModal, setCancelTransactionModal] = useState({ open: false, id: null })
+
     const columns = [
         { field: 'to', headerName: 'Destinatario', minWidth: 200, renderCell: row => <div>{row.row.to}</div> },
-        { field: 'ammount', headerName: 'Monto', minWidth: 200, renderCell: row => <div>{`$ ${row.row.ammount}`}</div> },
+        { field: 'ammount', headerName: 'Monto', minWidth: 200, renderCell: row => <div>{`$ ${Number(row.row.ammount).toLocaleString()}`}</div> },
         { field: 'created_at', headerName: 'Fecha', minWidth: 200, renderCell: row => <div>{row.row.created_at.slice(0, 10)}</div> },
+        { field: 'actions', headerName: 'Anular', minWidth: 10, renderCell: row => <div><IconButton disabled={!row.row.active} onClick={() => handleNullTransaction(row.row.id)}><Cancel /></IconButton></div> },
     ]
 
     const handleChange = (event) => {
@@ -172,6 +175,13 @@ const TransactionsInner = ({
 
     const handleModalOpen = () => {
         setNewTransactionModal(true)
+    }
+
+    const handleNullTransaction = (id) => {
+        setCancelTransactionModal({
+            open: true,
+            id: id,
+        })
     }
 
     return (
@@ -187,6 +197,17 @@ const TransactionsInner = ({
                             hideFooter
                             disableColumnFilter
                             rowSelection={false}
+                            getRowClassName={(params) => {
+                                return params.row.active === 0 ? 'disabled' : ''
+                            }}
+                            sx={{
+                                '.disabled':{
+                                    color: '#AAAAAA',
+                                    '&:hover': {
+                                        color: '#AAAAAA',
+                                    }
+                                }
+                            }}
                         />
                         <PaginationComponent
                             page={page}
@@ -202,6 +223,9 @@ const TransactionsInner = ({
             </Box>
             <Modal style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }} open={newTransactionModal} onClose={() => setNewTransactionModal(false)}>
                 <NewTransactionForm />
+            </Modal>
+            <Modal style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }} open={cancelTransactionModal.open} onClose={() => setCancelTransactionModal({open: false, id: null})}>
+                <CancelTransactionModal id={cancelTransactionModal?.id} handleClose={() => setCancelTransactionModal({ open: false, id: null })} />
             </Modal>
         </>
     )
@@ -337,6 +361,36 @@ const NewContactForm = () => {
 const trxErrorInitialData = {
     cvu: '',
     alias: '',
+}
+
+const CancelTransactionModal = ({id = null, handleClose = null}) => {
+    const [error, setError] = useState(null)
+    const [loading, setLoading] = useState(false)
+
+    const handleSubmit = async () => {
+        setLoading(true)
+        const [data, error] = await useFetch('/transaction', 'PUT', { transaction_id: id }, true);
+        if (data) {
+            setLoading(false)
+            window.location.reload()
+        } else {
+            setError(error.response.data.message)
+            setLoading(false)
+        }
+    }
+
+    return (
+        <Box display='flex' alignItems='center' gap={2} flexDirection='column' bgcolor='whitesmoke' boxShadow={'6px 6px 16px #f8b64c88'} padding={3}  borderRadius={4}>
+            <Typography variant='h5'>Anular Transaccion</Typography>
+            <Typography>¿Esta seguro que desea anular la transaccion?</Typography>
+            <LoadingErrorWraper error={error}>
+                <Box display='flex' gap={2}>
+                    <Button style={{minWidth: '9em'}} variant="contained" disabled={loading} onClick={() => handleSubmit()}>{loading ? <CircularProgress /> : 'Anular'}</Button>
+                    <Button style={{minWidth: '9em'}} variant="outlined" disabled={loading} onClick={() => handleClose()}>{loading ? <CircularProgress /> : 'Cancelar'}</Button>
+                </Box>
+            </LoadingErrorWraper>
+        </Box>
+    )
 }
 
 const NewTransactionForm = ({cvuD = null, aliasD=''}) => {
